@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d0199c11aa6f514784c5c69cd8378d8, type: 3}
+  m_Name: PlayFabEditorPrefsSO
+  m_EditorClassIdentifier: 
+  DevAccountEmail: kimjoy2002@naver.com
+  DevAccountToken: m63mxms6aghwso6dpbgmwak8c68hpasj4zzoda3h5bd16kpepk43nbbwryh6pw4xnqsm6ex4zkbs51eupqho9fkromue3o8aa4ihtindbj6d1wymbohj7n1oyznqj9wzz6jw9be8msbxhxuygma93qx5yb5tusbf4qhoucq4a973eia4e9nh8iu6rz96o9bq8gr9qtpp
+  SelectedStudio: SimSimBing Studio
+  SdkPath: Assets/PlayFabSDK
+  EdExPath: 
+  LocalCloudScriptPath: 
+  PanelIsShown: 0
+  curMainMenuIdx: 1
+  curSubMenuIdx: 0
