@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
@@ -17,7 +18,7 @@ public class VideoHandler : MonoBehaviour
 		if (mScreen != null && mVideoPlayer != null)
 		{
 			// 비디오 준비 코루틴 호출
-			StartCoroutine(PrepareVideo());
+			StartCoroutine(PrepareVideo("gacha00.mp4"));
 		}
 	}
 
@@ -33,11 +34,27 @@ public class VideoHandler : MonoBehaviour
 
 	}
 
-	protected IEnumerator PrepareVideo()
+	protected IEnumerator PrepareVideo(string mediaFileName)
 	{
-		// 비디오 준비
-		mVideoPlayer.Prepare();
+		string streamingMediaPath = Application.streamingAssetsPath + "/" + mediaFileName;
+		string persistentPath = Application.persistentDataPath + "/" + mediaFileName;
+		if (!File.Exists(persistentPath))
+		{
+			WWW wwwReader = new WWW(streamingMediaPath);
+			yield return wwwReader;
 
+			if (wwwReader.error != null)
+			{
+				Debug.LogError("wwwReader error: " + wwwReader.error);
+			}
+
+			System.IO.File.WriteAllBytes(persistentPath, wwwReader.bytes);
+		}
+
+
+		mVideoPlayer.url = persistentPath;
+
+		mVideoPlayer.Prepare();
 		// 비디오가 준비되는 것을 기다림
 		while (!mVideoPlayer.isPrepared)
 		{
