@@ -38,21 +38,18 @@ public class VideoHandler : MonoBehaviour
 	{
 		string streamingMediaPath = Application.streamingAssetsPath + "/" + mediaFileName;
 		string persistentPath = Application.persistentDataPath + "/" + mediaFileName;
+		Debug.Log("streamingMediaPath"+ streamingMediaPath);
+		Debug.Log("persistentPath"+ persistentPath);
+
 		if (!File.Exists(persistentPath))
 		{
-			WWW wwwReader = new WWW(streamingMediaPath);
-			yield return wwwReader;
-
-			if (wwwReader.error != null)
-			{
-				Debug.LogError("wwwReader error: " + wwwReader.error);
-			}
-
-			System.IO.File.WriteAllBytes(persistentPath, wwwReader.bytes);
+			mVideoPlayer.url = streamingMediaPath;
+		}
+		else
+		{
+			mVideoPlayer.url = persistentPath;
 		}
 
-
-		mVideoPlayer.url = persistentPath;
 
 		mVideoPlayer.Prepare();
 		// 비디오가 준비되는 것을 기다림
