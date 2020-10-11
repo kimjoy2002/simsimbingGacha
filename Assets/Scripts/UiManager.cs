@@ -17,7 +17,8 @@ public class UiManager : MonoSingleton<UiManager>
 	enum T_STAMINABAR
 	{
 		TEXT,
-		BAR
+		BAR,
+		REMAIN
 	}
 
 	private string username;
@@ -47,7 +48,7 @@ public class UiManager : MonoSingleton<UiManager>
 			stamina_min = value;
 			try
 			{
-				txt_Stamina_min.text = ((int)stamina_min).ToString();
+				txt_StaminaMin.text = ((int)stamina_min).ToString();
 			}
 			catch
 			{
@@ -56,7 +57,7 @@ public class UiManager : MonoSingleton<UiManager>
 		}
 	}
 
-	private int stamina_max;
+	private int stamina_max = 100;
 	public int StaminaMax
 	{
 		get => stamina_max;
@@ -65,7 +66,7 @@ public class UiManager : MonoSingleton<UiManager>
 			stamina_max = value;
 			try
 			{
-				txt_Stamina_max.text = ((int)stamina_max).ToString();
+				txt_StaminaMax.text = ((int)stamina_max).ToString();
 			}
 			catch
 			{
@@ -74,7 +75,23 @@ public class UiManager : MonoSingleton<UiManager>
 		}
 	}
 
-
+	private string remain_time;
+	public string RemainTime
+	{
+		get => remain_time;
+		set
+		{
+			remain_time = value;
+			try
+			{
+				txt_RemainTime.text = remain_time;
+			}
+			catch
+			{
+				Debug.Log("Not Found : Remain Time");
+			}
+		}
+	}
 
 	private GameObject canvas;
 
@@ -86,8 +103,9 @@ public class UiManager : MonoSingleton<UiManager>
 	private Dictionary<int, Transform> dic_t_stamina;
 
 	private Text txt_Username;
-	private Text txt_Stamina_min;
-	private Text txt_Stamina_max;
+	private Text txt_StaminaMin;
+	private Text txt_StaminaMax;
+	private Text txt_RemainTime;
 	private void Awake()
 	{
 		canvas = Resources.Load<GameObject>("Prefabs/GameUI");
@@ -108,8 +126,10 @@ public class UiManager : MonoSingleton<UiManager>
 	private void InitUI()
 	{
 		txt_Username = dic_topui[(int)TOPUI.USERNAME].GetComponent<Text>();
-		txt_Stamina_min = dic_t_stamina[(int)T_STAMINABAR.BAR].GetChild(0).GetComponent<Text>();
-		txt_Stamina_max = dic_t_stamina[(int)T_STAMINABAR.BAR].GetChild(1).GetComponent<Text>();
+		txt_StaminaMin = dic_t_stamina[(int)T_STAMINABAR.BAR].GetChild(0).GetComponent<Text>();
+		txt_StaminaMax = dic_t_stamina[(int)T_STAMINABAR.BAR].GetChild(1).GetComponent<Text>();
+		txt_RemainTime = dic_t_stamina[(int)T_STAMINABAR.REMAIN].GetComponent<Text>();
+
 
 		PlayFabManager.instance.GetUserInfo((result) =>
 		{
@@ -145,6 +165,15 @@ public class UiManager : MonoSingleton<UiManager>
 		{
 			Destroy(tr.GetChild(i));
 		}
+	}
+
+	public bool StaminaCapped()
+	{
+		if (stamina_max <= stamina_min)
+		{
+			return true;
+		}
+		return false;
 	}
 
 }
