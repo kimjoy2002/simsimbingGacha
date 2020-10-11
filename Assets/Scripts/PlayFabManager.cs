@@ -9,7 +9,9 @@ using UnityEngine.SceneManagement;
 public class PlayFabManager : MonoSingleton<PlayFabManager>
 {
 	public Text ErrorMsg;
-	public InputField EmailInput, PasswordInput, UsernameInput;
+	public InputField EmailInput, PasswordInput;
+	public InputField SignEmailInput, SignPasswordInput, SignUsernameInput;
+	public GameObject SignWindow, ResultWindow;
 
 	private void Awake()
 	{
@@ -18,13 +20,30 @@ public class PlayFabManager : MonoSingleton<PlayFabManager>
 
 	public void SignUp()
 	{
-		Debug.Log("Email:" + EmailInput.text  + ", username: " + UsernameInput.text + "password:" + PasswordInput.text);
-		var request = new RegisterPlayFabUserRequest {
-			Email = EmailInput.text,
-			Username = UsernameInput.text,
-			Password = PasswordInput.text
+		SignWindow.gameObject.SetActive(true);
+	}
+
+
+	public void SignUpComfirm()
+	{
+		var request = new RegisterPlayFabUserRequest
+		{
+			Email = SignEmailInput.text,
+			Username = SignUsernameInput.text,
+			Password = SignPasswordInput.text
 		};
 		PlayFabClientAPI.RegisterPlayFabUser(request, OnSignUpSuccess, OnSignUpFailure);
+	}
+
+
+	public void CancleSignWindow()
+	{
+		SignWindow.gameObject.SetActive(false);
+	}
+
+	public void CancleResultWindow()
+	{
+		ResultWindow.gameObject.SetActive(false);
 	}
 
 	public void Login()
@@ -40,37 +59,49 @@ public class PlayFabManager : MonoSingleton<PlayFabManager>
 	private void OnSignUpSuccess(RegisterPlayFabUserResult result)
 	{
 		string temp = "회원가입 성공";
-		ErrorMsg.text = temp + "\n";
+		ErrorMsg.text = temp;
+		SignWindow.gameObject.SetActive(false);
+		ResultWindow.gameObject.SetActive(true);
 		Debug.Log("회원가입 성공");
 	}
 
 	private void OnSignUpFailure(PlayFabError error)
 	{
-		string temp = "회원가입 실패" + error.ToString();
-		ErrorMsg.text = temp + "\n";
+		string temp = "회원가입 실패";
+		string detail = "알 수 없는 이유";
+		if(error.Error != PlayFabErrorCode.Unknown)
+		{
+			detail = error.GenerateErrorReport();
+		}
+		ErrorMsg.text = temp + "\n" + detail;
+		ResultWindow.gameObject.SetActive(true);
 		Debug.LogError(temp);
 	}
 
 	private void OnLoginSuccess(LoginResult result)
 	{
 		string temp = "로그인 성공";
-		ErrorMsg.text = temp + "\n";
 		Debug.Log(temp);
 		SceneManager.LoadSceneAsync("Lobby");
 	}
 
 	private void OnLoginFailure(PlayFabError error)
 	{
-		string temp = "로그인 실패" + error.ToString();
-		ErrorMsg.text = temp + "\n";
-		Debug.Log(temp);
+		string temp = "로그인 실패";
+		string detail = "알 수 없는 이유";
+		if (error.Error != PlayFabErrorCode.Unknown)
+		{
+			detail = error.GenerateErrorReport();
+		}
+		ErrorMsg.text = temp + "\n" + detail;
+		ResultWindow.gameObject.SetActive(true);
+		Debug.LogError(temp);
 	}
 
 
 	private void CommonFailure(PlayFabError error)
 	{
 		string temp = "Prefab 실패" + error.ToString();
-		ErrorMsg.text = temp + "\n";
 		Debug.Log(temp);
 	}
 
