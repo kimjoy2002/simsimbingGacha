@@ -7,82 +7,64 @@ using UnityEngine.Video;
 
 public class VideoHandler : MonoBehaviour
 {
-	public RawImage mScreen = null;
-	public VideoPlayer mVideoPlayer = null;
-	public Button gachaButtion;
+	public RuntimeAnimatorController[] mAnimatorList;
+	public int[] mTouchSlice;
+	public Animator mAnimator = null;
+	public GameObject gachaButtion;
 
-	private bool prepare = false;
+	private int randomCnt;
+	private Vector2 touchPos, nowPos;
 
 	void Start()
 	{
-		if (mScreen != null && mVideoPlayer != null)
-		{
-			// 비디오 준비 코루틴 호출
-			StartCoroutine(PrepareVideo("gacha00.mp4"));
-		}
+		randomCnt = Random.Range(0, mAnimatorList.Length);
+		mAnimator.runtimeAnimatorController = mAnimatorList[randomCnt];
+
+		RectTransform rectTransform = gachaButtion.transform.GetChild(0).GetComponent<RectTransform>();
+
+		rectTransform.Rotate(new Vector3(0, 0, 90* mTouchSlice[randomCnt]+90));
+
+
+		gachaButtion.gameObject.SetActive(true);
 	}
 
-	void Update()
+
+	public void Update()
 	{
-		if (prepare)
+		if (Input.GetMouseButton(0))
 		{
-			if (mVideoPlayer.isPlaying == false)
+			nowPos = (Input.touchCount == 0) ? (Vector2)Input.mousePosition : Input.GetTouch(0).position;
+
+			if (Input.GetMouseButtonDown(0))
 			{
-				UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Lobby");
+				touchPos = nowPos;
+				Debug.Log("ts : " + nowPos.x + ", " + nowPos.y);
 			}
 		}
 
-	}
-
-	protected IEnumerator PrepareVideo(string mediaFileName)
-	{
-		string streamingMediaPath = Application.streamingAssetsPath + "/" + mediaFileName;
-		string persistentPath = Application.persistentDataPath + "/" + mediaFileName;
-		Debug.Log("streamingMediaPath"+ streamingMediaPath);
-		Debug.Log("persistentPath"+ persistentPath);
-
-		if (!File.Exists(persistentPath))
+		if (Input.GetMouseButtonUp(0))  //터치 끝
 		{
-			mVideoPlayer.url = streamingMediaPath;
-		}
-		else
-		{
-			mVideoPlayer.url = persistentPath;
+			Debug.Log("te : " + nowPos.x + ", " + nowPos.y);
+			Vector2 diff = touchPos - nowPos;
+			if ((mTouchSlice[randomCnt] == 0 && diff.x > 100)
+				|| (mTouchSlice[randomCnt] == 1 && diff.x < -100)
+				|| (mTouchSlice[randomCnt] == 2 && diff.y > 100)
+				|| (mTouchSlice[randomCnt] == 3 && diff.y < -100)
+				)
+			{
+				mAnimator.SetBool("isPlay", true);
+				gachaButtion.gameObject.SetActive(false);
+			}
 		}
 
-
-		mVideoPlayer.Prepare();
-		// 비디오가 준비되는 것을 기다림
-		while (!mVideoPlayer.isPrepared)
+		if(mAnimator.GetCurrentAnimatorStateInfo(0).IsName("gacha") &&
+			mAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1 
+			&& !mAnimator.IsInTransition(0)
+			&& mAnimator.GetCurrentAnimatorStateInfo(0).length >
+				   mAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime)
 		{
-			yield return new WaitForSeconds(0.5f);
-		}
-
-		gachaButtion.gameObject.SetActive(true);
-		mVideoPlayer.time = 1;
-		// VideoPlayer의 출력 texture를 RawImage의 texture로 설정한다
-		mScreen.texture = mVideoPlayer.texture;
-		mVideoPlayer.Play();
-		mVideoPlayer.Pause();
-	}
-
-	public void PlayVideo()
-	{
-		prepare = true;
-		gachaButtion.gameObject.SetActive(false);
-		if (mVideoPlayer != null && mVideoPlayer.isPrepared)
-		{
-			// 비디오 재생
-			mVideoPlayer.Play();
-		}
-	}
-
-	public void StopVideo()
-	{
-		if (mVideoPlayer != null && mVideoPlayer.isPrepared)
-		{
-			// 비디오 멈춤
-			mVideoPlayer.Stop();
+			mAnimator.speed = 0.0f;
+			UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Lobby");
 		}
 	}
 }
