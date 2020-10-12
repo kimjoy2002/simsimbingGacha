@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using PlayFab;
+using PlayFab.ClientModels;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +16,7 @@ public class UiManager : MonoSingleton<UiManager>
 	{
 		USERNAME,
 		STAMINA,
+		BACK,
 	}
 	enum T_STAMINABAR
 	{
@@ -92,9 +96,13 @@ public class UiManager : MonoSingleton<UiManager>
 			}
 		}
 	}
-
+	private Button back_button;
+	public Button BackButton
+	{
+		get => back_button;
+	}
+	
 	private GameObject canvas;
-
 	private GameObject Root;
 
 	private Dictionary<int, Transform> dic_root;
@@ -106,10 +114,14 @@ public class UiManager : MonoSingleton<UiManager>
 	private Text txt_StaminaMin;
 	private Text txt_StaminaMax;
 	private Text txt_RemainTime;
-	private void Awake()
+
+	DateTime nextFreeTicket = new DateTime();
+	private void Start()
 	{
+		GameObject rootCanvas = GameObject.Find("StaticCanvas");
+		DontDestroyOnLoad(rootCanvas);
 		canvas = Resources.Load<GameObject>("Prefabs/GameUI");
-		Root = Instantiate(canvas, transform) as GameObject;
+		Root = Instantiate(canvas, rootCanvas.transform) as GameObject;
 
 		InitDictionaries();
 		InitUI();
@@ -130,7 +142,8 @@ public class UiManager : MonoSingleton<UiManager>
 		txt_StaminaMax = dic_t_stamina[(int)T_STAMINABAR.BAR].GetChild(1).GetComponent<Text>();
 		txt_RemainTime = dic_t_stamina[(int)T_STAMINABAR.REMAIN].GetComponent<Text>();
 
-
+		back_button = dic_topui[(int)TOPUI.BACK].GetComponent<Button>();
+		back_button.onClick.AddListener((delegate { UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Lobby"); }));
 		PlayFabManager.instance.GetUserInfo((result) =>
 		{
 			UserName = result.AccountInfo.Username;
@@ -174,6 +187,56 @@ public class UiManager : MonoSingleton<UiManager>
 			return true;
 		}
 		return false;
+	}
+
+
+	private void Update()
+	{
+		if (PlayFabClientAPI.IsClientLoggedIn())
+		{
+			if (UiManager.instance.StaminaCapped() == false)
+			{
+				if (nextFreeTicket.Subtract(DateTime.Now).TotalSeconds <= 0)
+				{
+					GetInventory();
+				}
+				else
+				{
+					var rechargeTime = nextFreeTicket.Subtract(DateTime.Now);
+					UiManager.instance.RemainTime = string.Format("{0:0}:{1:00}남음", rechargeTime.Minutes, rechargeTime.Seconds);
+				}
+			}
+		}
+	}
+
+	void GetInventory()
+	{
+		PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest()
+		, (result) =>
+		{
+			result.VirtualCurrency.TryGetValue("ST", out int staminaBalance);
+
+			if (result.VirtualCurrencyRechargeTimes.TryGetValue("ST", out VirtualCurrencyRechargeTime rechargeDetails))
+			{
+				UiManager.instance.StaminaMin = staminaBalance;
+				UiManager.instance.StaminaMax = rechargeDetails.RechargeMax;
+
+				if (staminaBalance < rechargeDetails.RechargeMax)
+				{
+					nextFreeTicket = DateTime.Now.AddSeconds(rechargeDetails.SecondsToRecharge);
+					var rechargeTime = nextFreeTicket.Subtract(DateTime.Now);
+
+					UiManager.instance.RemainTime = string.Format("{0:0}:{1:00}남음", rechargeTime.Minutes, rechargeTime.Seconds);
+				}
+				else
+				{
+					UiManager.instance.RemainTime = string.Empty;
+				}
+			}
+		}, (error) =>
+		{
+			Debug.Log(error.GenerateErrorReport());
+		});
 	}
 
 }

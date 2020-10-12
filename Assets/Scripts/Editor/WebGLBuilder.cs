@@ -12,7 +12,8 @@ class WebGLBuilder
 		string[] scenes = {
 			"Assets/Scenes/GameMain.unity",
 			"Assets/Scenes/Lobby.unity",
-			"Assets/Scenes/Gacha.unity"
+			"Assets/Scenes/Gacha.unity",
+			"Assets/Scenes/ChracterList.unity"
 		};
 
 		UnityEditor.BuildPipeline.BuildPlayer(scenes, "WebGL-Dist", UnityEditor.BuildTarget.WebGL, UnityEditor.BuildOptions.Development);

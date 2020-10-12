@@ -38,13 +38,11 @@ public class VideoHandler : MonoBehaviour
 			if (Input.GetMouseButtonDown(0))
 			{
 				touchPos = nowPos;
-				Debug.Log("ts : " + nowPos.x + ", " + nowPos.y);
 			}
 		}
 
 		if (Input.GetMouseButtonUp(0))  //터치 끝
 		{
-			Debug.Log("te : " + nowPos.x + ", " + nowPos.y);
 			Vector2 diff = touchPos - nowPos;
 			if ((mTouchSlice[randomCnt] == 0 && diff.x > 100)
 				|| (mTouchSlice[randomCnt] == 1 && diff.x < -100)
