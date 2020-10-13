@@ -18,6 +18,20 @@ public class PlayFabManager : MonoSingleton<PlayFabManager>
 		DontDestroyOnLoad(gameObject);
 	}
 
+	private void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Tab))
+		{
+			if (EmailInput.isFocused == true)
+				PasswordInput.Select();
+
+			if (SignEmailInput.isFocused == true)
+				SignUsernameInput.Select();
+			else if (SignUsernameInput.isFocused == true)
+				SignPasswordInput.Select();
+		}
+	}
+
 	public void SignUp()
 	{
 		SignWindow.gameObject.SetActive(true);
