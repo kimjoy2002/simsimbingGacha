@@ -13,6 +13,7 @@ class WebGLBuilder
 			"Assets/Scenes/GameMain.unity",
 			"Assets/Scenes/Lobby.unity",
 			"Assets/Scenes/Gacha.unity",
+			"Assets/Scenes/GachaMenu.unity",
 			"Assets/Scenes/ChracterList.unity"
 		};
 

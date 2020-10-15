@@ -1,5 +1,6 @@
 ﻿using PlayFab;
 using PlayFab.ClientModels;
+using PlayFab.Json;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,29 +12,50 @@ public class ChracterListManager : MonoBehaviour
 	public GameObject mScrollBackground;
 
 	private Rect rect;
+	private Dictionary<string, JsonObject> mCharaterDirectory = new Dictionary<string, JsonObject>();
 
 	// Start is called before the first frame update
 	void Start()
-    {
+	{
 		rect = mScrollRect.GetComponent<RectTransform>().rect;
 		mScrollBackground.GetComponent<RectTransform>().sizeDelta = new Vector2(0, rect.height);
-		var request = new GetUserInventoryRequest();
-		PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest
+
+		var catalogRequest = new GetCatalogItemsRequest()
 		{
-		}, (result) =>
+			CatalogVersion = "character",
+		};
+
+		PlayFabClientAPI.GetCatalogItems(catalogRequest, (result) =>
 		{
-			int index = 0;
-			foreach (ItemInstance item in result.Inventory)
+			foreach(var item in result.Catalog)
 			{
-				if(item.CatalogVersion == "character")
-				{
-					AddIcon(index++, item);
-				}
+				JsonObject CustomObj = (JsonObject)PlayFab.Json.PlayFabSimpleJson.DeserializeObject(item.CustomData);
+				mCharaterDirectory.Add(item.ItemId, CustomObj);
+				Debug.Log("item.ItemId:" + item.ItemId);
 			}
+
+			PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest
+			{
+			}, (result2) =>
+			{
+				int index = 0;
+				foreach (ItemInstance item in result2.Inventory)
+				{
+					if (item.CatalogVersion == "character")
+					{
+						AddIcon(index++, item);
+					}
+				}
+			}, (error) =>
+			{
+				Debug.Log(error.GenerateErrorReport());
+			});
+
 		}, (error) =>
 		{
 			Debug.Log(error.GenerateErrorReport());
 		});
+
 
 	}
 
@@ -63,7 +85,15 @@ public class ChracterListManager : MonoBehaviour
 		Debug.Log("Character/Face/" + item.ItemId);
 
 		Sprite img = Resources.Load<Sprite>("Character/Face/" + item.ItemId);
-		Debug.Log("Sprite:" + img);
 		IconObj.GetComponent<Image>().sprite = img;
+
+
+		if(mCharaterDirectory.ContainsKey(item.ItemId))
+		{
+			mCharaterDirectory[item.ItemId].TryGetValue("RARE", out object Rare);
+			Sprite rareImg = Resources.Load<Sprite>("Character/Rare/" + Rare);
+			IconObj.transform.Find("Rare").gameObject.GetComponent<Image>().sprite = rareImg;
+		}
+
 	}
 }

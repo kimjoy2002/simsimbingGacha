@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ChracterList.unity
     guid: ea22c393058a7004b8565646fc10d18c
+  - enabled: 1
+    path: Assets/Scenes/GachaMenu.unity
+    guid: c2ad303c11d8d6b4fa0a9304b6625518
   m_configObjects: {}

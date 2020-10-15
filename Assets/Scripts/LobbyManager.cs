@@ -35,6 +35,6 @@ public class LobbyManager : MonoBehaviour
 
 	public void Gacha()
 	{
-		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Gacha");
+		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("GachaMenu");
 	}
 }

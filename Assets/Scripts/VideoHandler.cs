@@ -1,5 +1,6 @@
 ﻿using PlayFab;
 using PlayFab.ClientModels;
+using PlayFab.Json;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -74,43 +75,39 @@ public class VideoHandler : MonoBehaviour
 		{
 			mAnimator.speed = 0.0f;
 			resultWindow = true;
-			var catalogRequest = new GetCatalogItemsRequest() { CatalogVersion = "character" };
-			PlayFabClientAPI.GetCatalogItems(catalogRequest, (result) =>
+
+			Debug.Log(StaticManager.instance.GachaPage);
+			var scriptRequest = new ExecuteCloudScriptRequest()
 			{
-				Debug.Log("result.Catalog.Count : " + result.Catalog.Count);
-				if (result.Catalog.Count > 0)
+				FunctionName = "Gacha",
+				FunctionParameter = new { page = StaticManager.instance.GachaPage },
+			};
+
+			PlayFabClientAPI.ExecuteCloudScript(scriptRequest, (result) =>
+			{
+				Debug.Log("Execute Finish");
+				Debug.Log(PlayFab.Json.PlayFabSimpleJson.SerializeObject(result));
+				foreach (var log in result.Logs)
 				{
-					int random = Random.Range(0, result.Catalog.Count - 1);
-					Debug.Log("Debuga : " + random);
-					CatalogItem item = result.Catalog[random];
-					Debug.Log("get gacha : " + item.ItemId);
-					var itemRequest = new PurchaseItemRequest()
-					{
-						CatalogVersion = item.CatalogVersion,
-						ItemId = item.ItemId,
-						VirtualCurrency = "SB",
-						Price = (int)item.VirtualCurrencyPrices["SB"],
-					};
-					PlayFabClientAPI.PurchaseItem(itemRequest, (itemResult) =>
-					{
-						Sprite img = Resources.Load<Sprite>("Character/Face/" + item.ItemId);
-						tempGachaPick.sprite = img;
-						tempGachaPick.gameObject.SetActive(true);
-						end = true;
-					}
-					, (error) =>
-					{
-						end = true;
-						Debug.Log(error.GenerateErrorReport());
-					}
-					);
+					Debug.Log(log.Message);
 				}
+				JsonObject jsonResult = (JsonObject)result.FunctionResult;
+				jsonResult.TryGetValue("ItemId", out object ItemId);
+				jsonResult.TryGetValue("CustomData", out object CustomData);
+				Debug.Log((string)CustomData);
+				JsonObject CustomObj = (JsonObject)PlayFab.Json.PlayFabSimpleJson.DeserializeObject((string)CustomData);
+				CustomObj.TryGetValue("RARE", out object Rare);
+				Sprite img = Resources.Load<Sprite>("Character/Face/" + (string)ItemId);
+				tempGachaPick.sprite = img;
+				Sprite rareImg = Resources.Load<Sprite>("Character/Rare/" + Rare);
+				tempGachaPick.transform.Find("Rare").gameObject.GetComponent<Image>().sprite = rareImg;
+				tempGachaPick.gameObject.SetActive(true);
 
 			}, (error) =>
 			{
 				end = true;
 				Debug.Log(error.GenerateErrorReport());
-			});			
+			});
 		}
 	}
 }
