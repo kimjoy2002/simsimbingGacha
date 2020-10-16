@@ -114,6 +114,7 @@ public class UiManager : MonoSingleton<UiManager>
 	private Text txt_StaminaMin;
 	private Text txt_StaminaMax;
 	private Text txt_RemainTime;
+	private bool isLoading = false;
 
 	DateTime nextFreeTicket = new DateTime();
 	private void Start()
@@ -201,11 +202,12 @@ public class UiManager : MonoSingleton<UiManager>
 	{
 		if (PlayFabClientAPI.IsClientLoggedIn())
 		{
-			if (UiManager.instance.StaminaCapped() == false)
+			if (UiManager.instance.StaminaCapped() == false && isLoading == false)
 			{
 				if (nextFreeTicket.Subtract(DateTime.Now).TotalSeconds <= 0)
 				{
 					GetInventory();
+					isLoading = true;
 				}
 				else
 				{
@@ -221,6 +223,7 @@ public class UiManager : MonoSingleton<UiManager>
 		PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest()
 		, (result) =>
 		{
+			isLoading = false;
 			result.VirtualCurrency.TryGetValue("ST", out int staminaBalance);
 
 			if (result.VirtualCurrencyRechargeTimes.TryGetValue("ST", out VirtualCurrencyRechargeTime rechargeDetails))
@@ -243,6 +246,7 @@ public class UiManager : MonoSingleton<UiManager>
 		}, (error) =>
 		{
 			Debug.Log(error.GenerateErrorReport());
+			isLoading = false;
 		});
 	}
 
