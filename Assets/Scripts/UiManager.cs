@@ -146,7 +146,14 @@ public class UiManager : MonoSingleton<UiManager>
 		back_button.onClick.AddListener((delegate { UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Lobby"); }));
 		PlayFabManager.instance.GetUserInfo((result) =>
 		{
-			UserName = result.AccountInfo.Username;
+			if(result.AccountInfo.Username != null)
+			{
+				UserName = result.AccountInfo.Username;
+			}
+			else if(result.AccountInfo.CustomIdInfo != null)
+			{
+				UserName = result.AccountInfo.CustomIdInfo.CustomId;
+			}
 		});
 		PlayFabManager.instance.GetUserInventory((result) =>
 		{

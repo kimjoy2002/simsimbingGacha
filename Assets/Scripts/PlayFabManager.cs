@@ -30,6 +30,18 @@ public class PlayFabManager : MonoSingleton<PlayFabManager>
 			else if (SignUsernameInput.isFocused == true)
 				SignPasswordInput.Select();
 		}
+		if (Input.GetKeyDown(KeyCode.Return))
+		{
+
+			if (EmailInput.isFocused == true || PasswordInput.isFocused == true)
+			{
+				Login();
+			}
+			else if (SignEmailInput.isFocused == true || SignUsernameInput.isFocused == true || SignPasswordInput.isFocused == true)
+			{
+				SignUpComfirm();
+			}
+		}
 	}
 
 	public void SignUp()
@@ -110,6 +122,17 @@ public class PlayFabManager : MonoSingleton<PlayFabManager>
 		ErrorMsg.text = temp + "\n" + detail;
 		ResultWindow.gameObject.SetActive(true);
 		Debug.LogError(temp);
+	}
+
+	public void Guest()
+	{
+		var request = new LoginWithCustomIDRequest
+		{
+			TitleId = "54F4F",
+			CustomId = SystemInfo.deviceUniqueIdentifier,
+			CreateAccount = true
+		};
+		PlayFabClientAPI.LoginWithCustomID(request, OnLoginSuccess, OnLoginFailure);
 	}
 
 

@@ -39,7 +39,7 @@ public class GachaMenuManager : MonoBehaviour
 
 		while (count>0)
 		{
-			if (mScrollbar.value <= border)
+			if (mScrollbar.value <= border || count == 1)
 			{
 				mTargetValue = center;
 				break;
