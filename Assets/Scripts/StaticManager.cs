@@ -1,6 +1,7 @@
 ﻿using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -69,5 +70,20 @@ public class StaticManager : MonoSingleton<StaticManager>
 	{
 		//TODO 실시간으로 가져오기, 시간차이 조정하기
 		return mCharaterDirectory[characterId];
+	}
+
+
+	public List<string> GetCharacterList(Func<JsonObject, bool> func)
+	{
+		List<string> list = new List<string>();
+
+		foreach (var entry in mCharaterDirectory)
+		{
+			if (func(entry.Value))
+			{
+				list.Add(entry.Key);
+			}
+		}
+		return list;
 	}
 }

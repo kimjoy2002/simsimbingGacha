@@ -38,4 +38,8 @@ public class LobbyManager : MonoBehaviour
 	{
 		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("GachaMenu");
 	}
+	public void Index()
+	{
+		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Index");
+	}
 }
