@@ -17,12 +17,19 @@ public class UiManager : MonoSingleton<UiManager>
 		USERNAME,
 		STAMINA,
 		BACK,
+		CRYSTAL
 	}
 	enum T_STAMINABAR
 	{
 		TEXT,
 		BAR,
 		REMAIN
+	}
+	enum T_CRYSTAL
+	{
+		IMAGE,
+		BAR,
+		NUM
 	}
 
 	private string username;
@@ -101,7 +108,25 @@ public class UiManager : MonoSingleton<UiManager>
 	{
 		get => back_button;
 	}
-	
+
+	private int crystal;
+	public int Crystal
+	{
+		get => crystal;
+		set
+		{
+			crystal = value;
+			try
+			{
+				txt_Crystal.text = ((int)crystal).ToString();
+			}
+			catch
+			{
+				Debug.Log("Not Found : Crystal");
+			}
+		}
+	}
+
 	private GameObject canvas;
 	private GameObject Root;
 
@@ -109,11 +134,13 @@ public class UiManager : MonoSingleton<UiManager>
 	private Dictionary<int, Transform> dic_topui;
 
 	private Dictionary<int, Transform> dic_t_stamina;
+	private Dictionary<int, Transform> dic_t_crystal;
 
 	private Text txt_Username;
 	private Text txt_StaminaMin;
 	private Text txt_StaminaMax;
 	private Text txt_RemainTime;
+	private Text txt_Crystal;
 	private bool isLoading = false;
 
 	DateTime nextFreeTicket = new DateTime();
@@ -126,6 +153,9 @@ public class UiManager : MonoSingleton<UiManager>
 
 		InitDictionaries();
 		InitUI();
+
+		GetInventory();
+		isLoading = true;
 	}
 
 	private void InitDictionaries()
@@ -134,6 +164,7 @@ public class UiManager : MonoSingleton<UiManager>
 		UI_to_Dic(dic_root[(int)ROOT.TOPUI], ref dic_topui);
 
 		UI_to_Dic(dic_topui[(int)TOPUI.STAMINA], ref dic_t_stamina);
+		UI_to_Dic(dic_topui[(int)TOPUI.CRYSTAL], ref dic_t_crystal);
 
 	}
 	private void InitUI()
@@ -142,6 +173,7 @@ public class UiManager : MonoSingleton<UiManager>
 		txt_StaminaMin = dic_t_stamina[(int)T_STAMINABAR.BAR].GetChild(0).GetComponent<Text>();
 		txt_StaminaMax = dic_t_stamina[(int)T_STAMINABAR.BAR].GetChild(1).GetComponent<Text>();
 		txt_RemainTime = dic_t_stamina[(int)T_STAMINABAR.REMAIN].GetComponent<Text>();
+		txt_Crystal = dic_t_crystal[(int)T_CRYSTAL.NUM].GetComponent<Text>();
 
 		back_button = dic_topui[(int)TOPUI.BACK].GetComponent<Button>();
 		back_button.onClick.AddListener((delegate { UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Lobby"); }));
@@ -207,7 +239,6 @@ public class UiManager : MonoSingleton<UiManager>
 				if (nextFreeTicket.Subtract(DateTime.Now).TotalSeconds <= 0)
 				{
 					GetInventory();
-					isLoading = true;
 				}
 				else
 				{
@@ -218,8 +249,9 @@ public class UiManager : MonoSingleton<UiManager>
 		}
 	}
 
-	void GetInventory()
+	public void GetInventory()
 	{
+		isLoading = true;
 		PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest()
 		, (result) =>
 		{
@@ -243,6 +275,9 @@ public class UiManager : MonoSingleton<UiManager>
 					UiManager.instance.RemainTime = string.Empty;
 				}
 			}
+
+			result.VirtualCurrency.TryGetValue("CY", out int crysyalBalance);
+			UiManager.instance.Crystal = crysyalBalance;
 		}, (error) =>
 		{
 			Debug.Log(error.GenerateErrorReport());

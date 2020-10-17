@@ -12,7 +12,6 @@ public class ChracterListManager : MonoBehaviour
 	public GameObject mScrollBackground;
 
 	private Rect rect;
-	private Dictionary<string, JsonObject> mCharaterDirectory = new Dictionary<string, JsonObject>();
 
 	// Start is called before the first frame update
 	void Start()
@@ -20,37 +19,19 @@ public class ChracterListManager : MonoBehaviour
 		rect = mScrollRect.GetComponent<RectTransform>().rect;
 		mScrollBackground.GetComponent<RectTransform>().sizeDelta = new Vector2(0, rect.height);
 
-		var catalogRequest = new GetCatalogItemsRequest()
-		{
-			CatalogVersion = "character",
-		};
 
-		PlayFabClientAPI.GetCatalogItems(catalogRequest, (result) =>
+		PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest
 		{
-			foreach(var item in result.Catalog)
+		}, (result) =>
+		{
+			int index = 0;
+			foreach (ItemInstance item in result.Inventory)
 			{
-				JsonObject CustomObj = (JsonObject)PlayFab.Json.PlayFabSimpleJson.DeserializeObject(item.CustomData);
-				mCharaterDirectory.Add(item.ItemId, CustomObj);
-				Debug.Log("item.ItemId:" + item.ItemId);
-			}
-
-			PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest
-			{
-			}, (result2) =>
-			{
-				int index = 0;
-				foreach (ItemInstance item in result2.Inventory)
+				if (item.CatalogVersion == "character")
 				{
-					if (item.CatalogVersion == "character")
-					{
-						AddIcon(index++, item);
-					}
+					AddIcon(index++, item);
 				}
-			}, (error) =>
-			{
-				Debug.Log(error.GenerateErrorReport());
-			});
-
+			}
 		}, (error) =>
 		{
 			Debug.Log(error.GenerateErrorReport());
@@ -63,37 +44,30 @@ public class ChracterListManager : MonoBehaviour
     void AddIcon(int index, ItemInstance item)
 	{
 		var icon = Resources.Load<GameObject>("Prefabs/Icon");
-		var IconObj = Instantiate(icon, mScrollBackground.transform) as GameObject;
+		var IconObj = Instantiate(icon, new Vector2(80, -80), Quaternion.identity) as GameObject;
 		IconObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
 		IconObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
 		IconObj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
-
-		var prev = IconObj.transform.position;
+		IconObj.transform.SetParent(mScrollBackground.transform ,false);
+		var prev = IconObj.transform.localPosition;
 		float init_x = prev.x;
 		while (index > 0)
 		{
 			prev.x += 120;
-			if(rect.width < prev.x)
+			if(rect.width < prev.x + 120)
 			{
 				prev.x = init_x;
 				prev.y -= 120;
 			}
 			index--;
 		}
-		IconObj.transform.position = prev;
+		IconObj.transform.localPosition = prev;
 
-		Debug.Log("Character/Face/" + item.ItemId);
-
-		Sprite img = Resources.Load<Sprite>("Character/Face/" + item.ItemId);
-		IconObj.GetComponent<Image>().sprite = img;
-
-
-		if(mCharaterDirectory.ContainsKey(item.ItemId))
+		if (rect.height < (prev.y-80) * -1)
 		{
-			mCharaterDirectory[item.ItemId].TryGetValue("RARE", out object Rare);
-			Sprite rareImg = Resources.Load<Sprite>("Character/Rare/" + Rare);
-			IconObj.transform.Find("Rare").gameObject.GetComponent<Image>().sprite = rareImg;
+			mScrollBackground.GetComponent<RectTransform>().sizeDelta = new Vector2(0, (prev.y - 80) * -1);
 		}
 
+		StaticManager.instance.SettingIconImg(item.ItemId, IconObj);
 	}
 }

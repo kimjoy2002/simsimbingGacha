@@ -11,6 +11,7 @@ public class LobbyManager : MonoBehaviour
 	public void Start()
 	{
 		_ = UiManager.instance;
+		_ = StaticManager.instance;
 	}
 
 	public void Lobby()

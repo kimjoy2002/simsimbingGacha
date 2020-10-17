@@ -14,14 +14,27 @@ public class VideoHandler : MonoBehaviour
 	public int[] mTouchSlice;
 	public Animator mAnimator = null;
 	public GameObject gachaButtion;
-	public Image tempGachaPick;
+	public GameObject tempGachaPick;
+	public GameObject gachaWindow;
 
+	public int requestGacha = -1;
+	public int remainGacha = 1;
 	public bool resultWindow = false, end = false;
 	private int randomCnt;
 	private Vector2 touchPos, nowPos;
+	private List<string> pickList = new List<string> ();
+
+
+	public class GachaResult
+	{
+		public string Result;
+		public List<string> ItemId;
+	}
+
 
 	void Start()
 	{
+		remainGacha = StaticManager.instance.GachaNum;
 		randomCnt = Random.Range(0, mAnimatorList.Length);
 		mAnimator.runtimeAnimatorController = mAnimatorList[randomCnt];
 
@@ -48,66 +61,119 @@ public class VideoHandler : MonoBehaviour
 
 		if (Input.GetMouseButtonUp(0))  //터치 끝
 		{
-			if(end == true)
+			if (end == true)
 			{
-				UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Lobby");
 			}
-			else
+			else if (requestGacha == -1)
 			{
 				Vector2 diff = touchPos - nowPos;
 				if ((mTouchSlice[randomCnt] == 0 && diff.x > 100)
-					|| (mTouchSlice[randomCnt] == 1 && diff.x < -100)
-					|| (mTouchSlice[randomCnt] == 2 && diff.y > 100)
+					|| (mTouchSlice[randomCnt] == 1 && diff.y > 100)
+					|| (mTouchSlice[randomCnt] == 2 && diff.x < -100)
 					|| (mTouchSlice[randomCnt] == 3 && diff.y < -100)
 					)
 				{
 					mAnimator.SetBool("isPlay", true);
 					gachaButtion.gameObject.SetActive(false);
+					requestGacha = remainGacha;
+					var scriptRequest = new ExecuteCloudScriptRequest()
+					{
+						FunctionName = "Gacha",
+						FunctionParameter = new { page = StaticManager.instance.GachaPage, num = requestGacha },
+					};
+
+					PlayFabClientAPI.ExecuteCloudScript(scriptRequest, (result) =>
+					{
+						Debug.Log(PlayFab.Json.PlayFabSimpleJson.SerializeObject(result));
+
+
+						JsonObject jsonResult = (JsonObject)result.FunctionResult;
+
+						Debug.Log(jsonResult.ToString());
+
+						GachaResult result_ = JsonUtility.FromJson<GachaResult>(jsonResult.ToString());
+
+						foreach (string key in result_.ItemId)
+						{
+							pickList.Add(key);
+						}
+						//KeyValuePair<string, JsonObject> entry = new KeyValuePair<string, JsonObject>((string)ItemId, CustomObj);
+						//pickList.Add(entry);
+						requestGacha = 0;
+					}, (error) =>
+					{
+							requestGacha = 0;
+							end = true;
+							Debug.Log(error.GenerateErrorReport());
+					});
+					UiManager.instance.Crystal -= requestGacha*100;
+				}
+			}
+			else if (requestGacha == 0 && resultWindow == true)
+			{
+				remainGacha--;
+				if (remainGacha == 0)
+				{
+					for (int i = 0; i < pickList.Count; i++)
+					{
+						AddIcon(i, pickList[i]);
+						end = true;
+					}
+					gachaWindow.gameObject.SetActive(true);
+				}
+				else
+				{
+					StaticManager.instance.SettingIconImg(pickList[pickList.Count - remainGacha], tempGachaPick);
+					tempGachaPick.gameObject.SetActive(true);
+					tempGachaPick.GetComponent<ScaleChangeEffect>().StartAnimation();
+
+					var paticle = Resources.Load<GameObject>("Prefabs/GachaPaticle");
+					var patiObj = Instantiate(paticle, new Vector2(), Quaternion.identity) as GameObject;
 				}
 			}
 		}
 
 		if (resultWindow == false && mAnimator.GetCurrentAnimatorStateInfo(0).IsName("gacha") &&
-			mAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1 
+			mAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1
 			&& !mAnimator.IsInTransition(0)
 			&& mAnimator.GetCurrentAnimatorStateInfo(0).length >
 				   mAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime)
 		{
-			mAnimator.speed = 0.0f;
-			resultWindow = true;
-
-			Debug.Log(StaticManager.instance.GachaPage);
-			var scriptRequest = new ExecuteCloudScriptRequest()
+			if (requestGacha == 0)
 			{
-				FunctionName = "Gacha",
-				FunctionParameter = new { page = StaticManager.instance.GachaPage },
-			};
-
-			PlayFabClientAPI.ExecuteCloudScript(scriptRequest, (result) =>
-			{
-				Debug.Log("Execute Finish");
-				Debug.Log(PlayFab.Json.PlayFabSimpleJson.SerializeObject(result));
-				foreach (var log in result.Logs)
-				{
-					Debug.Log(log.Message);
-				}
-				JsonObject jsonResult = (JsonObject)result.FunctionResult;
-				jsonResult.TryGetValue("ItemId", out object ItemId);
-				jsonResult.TryGetValue("CustomData", out object CustomData);
-				Debug.Log((string)CustomData);
-				JsonObject CustomObj = (JsonObject)PlayFab.Json.PlayFabSimpleJson.DeserializeObject((string)CustomData);
-				CustomObj.TryGetValue("RARE", out object Rare);
-				Sprite img = Resources.Load<Sprite>("Character/Face/" + (string)ItemId);
-				tempGachaPick.sprite = img;
-				Sprite rareImg = Resources.Load<Sprite>("Character/Rare/" + Rare);
-				tempGachaPick.transform.Find("Rare").gameObject.GetComponent<Image>().sprite = rareImg;
+				mAnimator.speed = 0.0f;
+				resultWindow = true;
+				
+				StaticManager.instance.SettingIconImg(pickList[0], tempGachaPick);
 				tempGachaPick.gameObject.SetActive(true);
+				tempGachaPick.GetComponent<ScaleChangeEffect>().StartAnimation();
 
-			}, (error) =>
-			{
-				end = true;
-				Debug.Log(error.GenerateErrorReport());
-			});
+				var paticle = Resources.Load<GameObject>("Prefabs/GachaPaticle");
+				var patiObj = Instantiate(paticle, new Vector2(), Quaternion.identity) as GameObject;
+			}
 		}
+	}
+
+
+
+	void AddIcon(int index, string itemId)
+	{
+		Rect rect = gachaWindow.GetComponent<RectTransform>().rect;
+		float assumeSizeX = rect.width / 5;
+		float assumeSizeY = rect.height / 5;
+
+		var icon = Resources.Load<GameObject>("Prefabs/Icon");
+		var IconObj = Instantiate(icon, new Vector2(assumeSizeX/2, -assumeSizeY), Quaternion.identity) as GameObject;
+		IconObj.GetComponent<RectTransform>().anchorMin = new Vector2(0, 1);
+		IconObj.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
+		IconObj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
+		IconObj.transform.SetParent(gachaWindow.transform, false);
+		var prev = IconObj.transform.localPosition;
+
+		prev.x = prev.x + (index % 5) * assumeSizeX;
+		prev.y = prev.y - (index / 5) * assumeSizeX;
+		IconObj.transform.localPosition = prev;
+
+		StaticManager.instance.SettingIconImg(itemId, IconObj);
 	}
 }

@@ -75,14 +75,22 @@ public class GachaMenuManager : MonoBehaviour
 
 	public void GachaOne()
 	{
-		StaticManager.instance.GachaPage = contentPanel.GetChild(currentGachaPage).gameObject.name;
-		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Gacha");
+		if (UiManager.instance.Crystal >= 100)
+		{
+			StaticManager.instance.GachaPage = contentPanel.GetChild(currentGachaPage).gameObject.name;
+			StaticManager.instance.GachaNum = 1;
+			UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Gacha");
+		}
 	}
 
 	public void GachaTen()
 	{
-
-
+		if(UiManager.instance.Crystal >= 1000)
+		{
+			StaticManager.instance.GachaPage = contentPanel.GetChild(currentGachaPage).gameObject.name;
+			StaticManager.instance.GachaNum = 10;
+			UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Gacha");
+		}
 	}
 
 
