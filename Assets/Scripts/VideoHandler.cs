@@ -19,7 +19,7 @@ public class VideoHandler : MonoBehaviour
 
 	public int requestGacha = -1;
 	public int remainGacha = 1;
-	public bool resultWindow = false, end = false;
+	public bool resultWindow = false, start = false, end = false;
 	private int randomCnt;
 	private Vector2 touchPos, nowPos;
 	private List<string> pickList = new List<string> ();
@@ -133,24 +133,25 @@ public class VideoHandler : MonoBehaviour
 			}
 		}
 
-		if (resultWindow == false && mAnimator.GetCurrentAnimatorStateInfo(0).IsName("gacha") &&
+		if (start == false && mAnimator.GetCurrentAnimatorStateInfo(0).IsName("gacha") &&
 			mAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1
 			&& !mAnimator.IsInTransition(0)
 			&& mAnimator.GetCurrentAnimatorStateInfo(0).length >
 				   mAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime)
 		{
-			if (requestGacha == 0)
-			{
-				mAnimator.speed = 0.0f;
-				resultWindow = true;
-				
-				StaticManager.instance.SettingIconImg(pickList[0], tempGachaPick);
-				tempGachaPick.gameObject.SetActive(true);
-				tempGachaPick.GetComponent<ScaleChangeEffect>().StartAnimation();
+			mAnimator.speed = 0.0f;
+			start = true;
+		}
+		if (start == true && resultWindow == false && requestGacha == 0)
+		{
+			resultWindow = true;
 
-				var paticle = Resources.Load<GameObject>("Prefabs/GachaPaticle");
-				var patiObj = Instantiate(paticle, new Vector2(), Quaternion.identity) as GameObject;
-			}
+			StaticManager.instance.SettingIconImg(pickList[0], tempGachaPick);
+			tempGachaPick.gameObject.SetActive(true);
+			tempGachaPick.GetComponent<ScaleChangeEffect>().StartAnimation();
+
+			var paticle = Resources.Load<GameObject>("Prefabs/GachaPaticle");
+			var patiObj = Instantiate(paticle, new Vector2(), Quaternion.identity) as GameObject;
 		}
 	}
 
