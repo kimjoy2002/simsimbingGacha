@@ -9,6 +9,7 @@ public class IndexManager : MonoBehaviour
 {
 	public GameObject mScrollRect;
 	public GameObject mScrollBackground;
+	public GameObject menu;
 	public Material bw_mat;
 
 
@@ -25,6 +26,18 @@ public class IndexManager : MonoBehaviour
     {
 		rect = mScrollRect.GetComponent<RectTransform>().rect;
 		mScrollBackground.GetComponent<RectTransform>().sizeDelta = new Vector2(0, rect.height);
+
+
+		Rect menuRect = menu.GetComponent<RectTransform>().rect;
+		int len = menu.transform.childCount;
+		float diff = menuRect.height / len;
+		for (int i = 0; i < len; i++)
+		{
+			RectTransform rRect = menu.transform.GetChild(i).GetComponent<RectTransform>();
+			var prev = menu.transform.GetChild(i).localPosition;
+			prev.y = diff*-0.5f + - diff * i;
+			menu.transform.GetChild(i).localPosition = prev;
+		}
 
 		PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest
 		{
