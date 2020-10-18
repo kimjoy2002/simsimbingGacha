@@ -1,6 +1,7 @@
 ﻿using PlayFab;
 using PlayFab.ClientModels;
 using PlayFab.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +9,15 @@ using UnityEngine.UI;
 
 public class ChracterListManager : MonoBehaviour
 {
+	enum SORT_TYPE {
+		NEW,
+		OLD,
+		RARE_DES,
+		RARE_ASC,
+		EMO,
+		LEVEL
+	};
+
 	public GameObject mScrollRect;
 	public GameObject mScrollBackground;
 
@@ -18,26 +28,55 @@ public class ChracterListManager : MonoBehaviour
 	{
 		rect = mScrollRect.GetComponent<RectTransform>().rect;
 		mScrollBackground.GetComponent<RectTransform>().sizeDelta = new Vector2(0, rect.height);
+		TableRefresh(SORT_TYPE.NEW);
+	}
 
 
-		PlayFabClientAPI.GetUserInventory(new GetUserInventoryRequest
-		{
-		}, (result) =>
+	private void TableRefresh(SORT_TYPE sortType)
+	{
+		StaticManager.instance.GetCharacterDataList(
+		(result) =>
 		{
 			int index = 0;
-			foreach (ItemInstance item in result.Inventory)
+			List<ItemInstance> itemValue = new List<ItemInstance>();
+			foreach (var val in result)
 			{
-				if (item.CatalogVersion == "character")
+				//copy
+				itemValue.Add(val);
+			}
+
+			itemValue.Sort(delegate (ItemInstance A, ItemInstance B)
+			{
+				switch(sortType)
 				{
-					AddIcon(index++, item);
+					case SORT_TYPE.NEW:
+						return DateTime.Compare(B.PurchaseDate.GetValueOrDefault(), A.PurchaseDate.GetValueOrDefault());
+					case SORT_TYPE.OLD:
+						return DateTime.Compare(A.PurchaseDate.GetValueOrDefault(), B.PurchaseDate.GetValueOrDefault());
+					case SORT_TYPE.RARE_DES:
+						return StaticManager.instance.GetCharRareToInt(A.ItemId) < StaticManager.instance.GetCharRareToInt(B.ItemId) ? 1 : (
+							StaticManager.instance.GetCharRareToInt(A.ItemId) > StaticManager.instance.GetCharRareToInt(B.ItemId) ? -1 : 0);
+					case SORT_TYPE.RARE_ASC:
+						return StaticManager.instance.GetCharRareToInt(A.ItemId) > StaticManager.instance.GetCharRareToInt(B.ItemId) ? 1 : (
+							StaticManager.instance.GetCharRareToInt(A.ItemId) < StaticManager.instance.GetCharRareToInt(B.ItemId) ? -1 : 0);
+					case SORT_TYPE.EMO:
+						return StaticManager.instance.GetCharEmoToInt(A.ItemId) < StaticManager.instance.GetCharEmoToInt(B.ItemId) ? 1 : (
+							StaticManager.instance.GetCharEmoToInt(A.ItemId) > StaticManager.instance.GetCharEmoToInt(B.ItemId) ? -1 : 0);
+					case SORT_TYPE.LEVEL:
+						return 0; //not yet
+					default:
+						return 0;
 				}
+			});
+
+			foreach (ItemInstance item in itemValue)
+			{
+				AddIcon(index++, item);
 			}
 		}, (error) =>
 		{
 			Debug.Log(error.GenerateErrorReport());
 		});
-
-
 	}
 
     // Update is called once per frame
@@ -69,5 +108,11 @@ public class ChracterListManager : MonoBehaviour
 		}
 
 		StaticManager.instance.SettingIconImg(item.ItemId, IconObj);
+	}
+	public void ChangeSort(Dropdown target)
+	{
+		int value = target.value;
+		Debug.Log("value = "+value);
+		TableRefresh((SORT_TYPE)value);
 	}
 }

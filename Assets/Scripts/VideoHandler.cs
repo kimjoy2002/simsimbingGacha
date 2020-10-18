@@ -99,6 +99,7 @@ public class VideoHandler : MonoBehaviour
 						}
 						//KeyValuePair<string, JsonObject> entry = new KeyValuePair<string, JsonObject>((string)ItemId, CustomObj);
 						//pickList.Add(entry);
+						StaticManager.instance.mCharacterLocalDataChanged = true;
 						requestGacha = 0;
 					}, (error) =>
 					{
