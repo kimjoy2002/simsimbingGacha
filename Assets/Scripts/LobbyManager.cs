@@ -42,4 +42,8 @@ public class LobbyManager : MonoBehaviour
 	{
 		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Index");
 	}
+	public void Party()
+	{
+		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("CharacterSelect");
+	}
 }

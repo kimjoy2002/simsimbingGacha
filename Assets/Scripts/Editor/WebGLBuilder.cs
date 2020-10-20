@@ -15,7 +15,8 @@ class WebGLBuilder
 			"Assets/Scenes/Gacha.unity",
 			"Assets/Scenes/GachaMenu.unity",
 			"Assets/Scenes/ChracterList.unity",
-			"Assets/Scenes/Index.unity"
+			"Assets/Scenes/Index.unity",
+			"Assets/Scenes/ChracterSelect.unity"
 		};
 
 		UnityEditor.BuildPipeline.BuildPlayer(scenes, "WebGL-Dist", UnityEditor.BuildTarget.WebGL, UnityEditor.BuildOptions.Development);
