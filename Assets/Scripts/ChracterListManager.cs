@@ -22,18 +22,69 @@ public class ChracterListManager : MonoBehaviour
 	public GameObject mScrollRect;
 	public GameObject mScrollBackground;
 	public bool isCharacterSelect;
+	public List<GameObject> mBoxList;
 
-	private GameObject mCharacter;
+	private List<GameObject> mCharacter = new List<GameObject>(4);
+	private List<int> orderLayer = new List<int>(4);
 	private Rect rect;
+	private int currentBox = -1;
 
-	// Start is called before the first frame update
-	void Start()
+	 // Start is called before the first frame update
+	 void Start()
 	{
 		rect = mScrollRect.GetComponent<RectTransform>().rect;
 		mScrollBackground.GetComponent<RectTransform>().sizeDelta = new Vector2(0, rect.height);
 		TableRefresh(SORT_TYPE.NEW);
+		for(int i =0; i < 4;i ++)
+		{
+			mCharacter.Add(null);
+		}
+		orderLayer.Add(2);
+		orderLayer.Add(1);
+		orderLayer.Add(4);
+		orderLayer.Add(3);
 	}
+	void Update()
+	{
+		if(mBoxList != null && mBoxList.Count > 0)
+		{
+			if(Input.GetMouseButton(0))
+			{
+				Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+				RaycastHit2D hit = Physics2D.GetRayIntersection(ray, Mathf.Infinity);
 
+				if (hit.collider != null)
+				{
+					int colliderBox = -1;
+					for(int i = 0; i < 4; i++)
+					{
+						if(mBoxList[i].transform == hit.collider.transform)
+						{
+							colliderBox = i;
+						}
+					}
+					if (currentBox >= 0)
+					{
+						SpriteRenderer spr = mBoxList[currentBox].GetComponent<SpriteRenderer>();
+						Color color = spr.color;
+						color.a = 0f;
+						spr.color = color;
+					}
+
+					if (colliderBox >= 0)
+					{
+						currentBox = colliderBox;
+						SpriteRenderer spr = mBoxList[currentBox].GetComponent<SpriteRenderer>();
+
+						Color color = spr.color;
+						color.a = 255f;
+						spr.color = color;
+					}
+				}
+			}
+
+		}
+	}
 
 	private void TableRefresh(SORT_TYPE sortType)
 	{
@@ -117,19 +168,17 @@ public class ChracterListManager : MonoBehaviour
 	public void ChangeSort(Dropdown target)
 	{
 		int value = target.value;
-		Debug.Log("value = " + value);
 		TableRefresh((SORT_TYPE)value);
 	}
 
 	void ClickButton(GameObject button)
 	{
-		Debug.Log("button value : " + button.name);
-		if (isCharacterSelect)
+		if (isCharacterSelect && currentBox >= 0)
 		{
 			bool general = false;
-			if (mCharacter != null)
+			if (mCharacter[currentBox] != null)
 			{
-				Destroy(mCharacter);
+				Destroy(mCharacter[currentBox]);
 			}
 			var baseCh = Resources.Load<GameObject>("Prefabs/Character/" + button.name);
 			if (baseCh == null)
@@ -138,28 +187,42 @@ public class ChracterListManager : MonoBehaviour
 				general = true;
 			}
 
-			mCharacter = Instantiate(baseCh, new Vector2(-283, -30), Quaternion.identity) as GameObject;
-			mCharacter.transform.localScale = new Vector2(100, 100);
+			Vector2 vec = mBoxList[currentBox].transform.position;
+			vec.y += 90;
+			mCharacter[currentBox] = Instantiate(baseCh, vec, Quaternion.identity) as GameObject;
+			mCharacter[currentBox].transform.localScale = new Vector2(75, 75);
+			mCharacter[currentBox].GetComponent<SpriteRenderer>().sortingOrder = orderLayer[currentBox];
 
-			if (general)
+
+			var head = mCharacter[currentBox].transform.Find("head");
+			if (head != null)
 			{
-				var headImg = Resources.Load<Sprite>("Character/Face/" + button.name);
-				if (headImg)
+				var headRanderer = head.gameObject.GetComponent<SpriteRenderer>();
+				headRanderer.sortingOrder = orderLayer[currentBox];
+				if (general)
 				{
-					mCharacter.transform.Find("head").gameObject.GetComponent<SpriteRenderer>().sprite = headImg;
+					var headImg = Resources.Load<Sprite>("Character/Face/" + button.name);
+					if (headImg)
+					{
+						headRanderer.sprite = headImg;
+					}
 				}
 			}
+
 		}
 	}
 
 
 	public void ChangePosition()
 	{
-		if (mCharacter != null)
+		foreach (var chars in mCharacter)
 		{
-			mCharacter.GetComponent<Animator>().SetBool("isMove", UnityEngine.Random.Range(0, 2) == 1 ? true : false);
-			mCharacter.GetComponent<Animator>().SetBool("isAttack", UnityEngine.Random.Range(0, 2) == 1 ? true : false);
-			mCharacter.GetComponent<Animator>().SetBool("isAttacked", UnityEngine.Random.Range(0, 2) == 1 ? true : false);
+			if (chars != null)
+			{
+				chars.GetComponent<Animator>().SetBool("isMove", UnityEngine.Random.Range(0, 2) == 1 ? true : false);
+				chars.GetComponent<Animator>().SetBool("isAttack", UnityEngine.Random.Range(0, 2) == 1 ? true : false);
+				chars.GetComponent<Animator>().SetBool("isAttacked", UnityEngine.Random.Range(0, 2) == 1 ? true : false);
+			}
 		}
 	}
 }
