@@ -629,7 +629,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\uBB50\uB123\uC9C0"
+  m_Text: "\uC804\uD22C\uD558\uAE30\n"
 --- !u!222 &810857653
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -720,8 +720,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Login
+      - m_Target: {fileID: 1734398896}
+        m_MethodName: Battle
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

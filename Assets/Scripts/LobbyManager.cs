@@ -46,4 +46,8 @@ public class LobbyManager : MonoBehaviour
 	{
 		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("CharacterSelect");
 	}
+	public void Battle()
+	{
+		UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("GameScreen");
+	}
 }

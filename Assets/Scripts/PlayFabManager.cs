@@ -44,26 +44,29 @@ public class PlayFabManager : MonoSingleton<PlayFabManager>
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.Tab))
+		if(SceneManager.GetActiveScene().name == "GameMain")
 		{
-			if (EmailInput.isFocused == true)
-				PasswordInput.Select();
-
-			if (SignEmailInput.isFocused == true)
-				SignUsernameInput.Select();
-			else if (SignUsernameInput.isFocused == true)
-				SignPasswordInput.Select();
-		}
-		if (Input.GetKeyDown(KeyCode.Return))
-		{
-
-			if (EmailInput.isFocused == true || PasswordInput.isFocused == true)
+			if (Input.GetKeyDown(KeyCode.Tab))
 			{
-				Login();
+				if (EmailInput.isFocused == true)
+					PasswordInput.Select();
+
+				if (SignEmailInput.isFocused == true)
+					SignUsernameInput.Select();
+				else if (SignUsernameInput.isFocused == true)
+					SignPasswordInput.Select();
 			}
-			else if (SignEmailInput.isFocused == true || SignUsernameInput.isFocused == true || SignPasswordInput.isFocused == true)
+			if (Input.GetKeyDown(KeyCode.Return))
 			{
-				SignUpComfirm();
+
+				if (EmailInput.isFocused == true || PasswordInput.isFocused == true)
+				{
+					Login();
+				}
+				else if (SignEmailInput.isFocused == true || SignUsernameInput.isFocused == true || SignPasswordInput.isFocused == true)
+				{
+					SignUpComfirm();
+				}
 			}
 		}
 	}

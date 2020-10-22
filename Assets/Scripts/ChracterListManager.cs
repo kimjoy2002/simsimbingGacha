@@ -25,12 +25,19 @@ public class ChracterListManager : MonoBehaviour
 	public List<GameObject> mBoxList;
 
 	private List<GameObject> mCharacter = new List<GameObject>(4);
+	private List<ItemInstance> mCharacterInstance = new List<ItemInstance>(4);
 	private List<int> orderLayer = new List<int>(4);
 	private Rect rect;
 	private int currentBox = -1;
+	private Dictionary<GameObject, ItemInstance> characterInfoMap = new Dictionary<GameObject, ItemInstance>();
 
-	 // Start is called before the first frame update
-	 void Start()
+
+
+	private bool characterListLoadingFinish = false;
+	private GetUserDataResult partyResult = null;
+
+	// Start is called before the first frame update
+	void Start()
 	{
 		rect = mScrollRect.GetComponent<RectTransform>().rect;
 		mScrollBackground.GetComponent<RectTransform>().sizeDelta = new Vector2(0, rect.height);
@@ -38,11 +45,16 @@ public class ChracterListManager : MonoBehaviour
 		for(int i =0; i < 4;i ++)
 		{
 			mCharacter.Add(null);
+			mCharacterInstance.Add(null);
 		}
 		orderLayer.Add(2);
 		orderLayer.Add(1);
 		orderLayer.Add(4);
 		orderLayer.Add(3);
+		if(isCharacterSelect)
+		{
+			GetPartyOnServer();
+		}
 	}
 	void Update()
 	{
@@ -86,6 +98,60 @@ public class ChracterListManager : MonoBehaviour
 		}
 	}
 
+	public void GetPartyOnServer()
+	{
+		List<string> partyKey = new List<string>();
+		partyKey.Add("Party1");
+		partyKey.Add("Party2");
+		partyKey.Add("Party3");
+		partyKey.Add("Party4");
+
+		var dataRequest = new GetUserDataRequest()
+		{
+			Keys = partyKey
+		};
+
+		PlayFabClientAPI.GetUserData(dataRequest, (result) =>
+		{
+			Debug.Log("GetUserData complete");
+			Debug.Log(PlayFab.Json.PlayFabSimpleJson.SerializeObject(result));
+			partyResult = result;
+			if (characterListLoadingFinish)
+			{
+				settingParty();
+			}
+		}, (error) =>
+		{
+			Debug.Log(error.GenerateErrorReport());
+		});
+	}
+
+	private void settingParty()
+	{
+		foreach (var data in partyResult.Data)
+		{
+			currentBox = data.Key == "Party1" ? 0 :
+						 data.Key == "Party2" ? 1 :
+						 data.Key == "Party3" ? 2 :
+						 data.Key == "Party4" ? 3 : -1;
+			GameObject button = null;
+			foreach (var buttonMap in characterInfoMap)
+			{
+				if (buttonMap.Value.ItemInstanceId == data.Value.Value)
+				{
+					button = buttonMap.Key;
+				}
+			}
+			if (button != null)
+			{
+				ClickButton(button);
+			}
+		}
+		currentBox = -1;
+		partyResult = null;
+	}
+
+
 	private void TableRefresh(SORT_TYPE sortType)
 	{
 		StaticManager.instance.GetCharacterDataList(
@@ -127,6 +193,11 @@ public class ChracterListManager : MonoBehaviour
 			{
 				AddIcon(index++, item);
 			}
+			characterListLoadingFinish = true;
+
+		    if(partyResult != null)
+				settingParty();
+
 		}, (error) =>
 		{
 			Debug.Log(error.GenerateErrorReport());
@@ -164,10 +235,25 @@ public class ChracterListManager : MonoBehaviour
 		StaticManager.instance.SettingIconImg(item.ItemId, IconObj);
 		IconObj.name = item.ItemId;
 		IconObj.GetComponent<Button>().onClick.AddListener(() => ClickButton(IconObj));
+		characterInfoMap.Add(IconObj, item);
+	}
+	public void ClearMenu()
+	{
+		Transform[] childList = mScrollBackground.GetComponentsInChildren<Transform>(true);
+		if (childList != null && childList.Length > 1)
+		{
+			for (int i = 1; i < childList.Length; i++)
+			{
+				if (childList[i] != transform)
+					Destroy(childList[i].gameObject);
+			}
+		}
 	}
 	public void ChangeSort(Dropdown target)
 	{
 		int value = target.value;
+		characterInfoMap.Clear();
+		ClearMenu();
 		TableRefresh((SORT_TYPE)value);
 	}
 
@@ -176,6 +262,15 @@ public class ChracterListManager : MonoBehaviour
 		if (isCharacterSelect && currentBox >= 0)
 		{
 			bool general = false;
+			for(int i = 0; i < 4; i++)
+			{
+				if(mCharacterInstance[i] == characterInfoMap[button])
+				{
+					mCharacterInstance[i] = null;
+					Destroy(mCharacter[i]);
+					mCharacter[i] = null;
+				}
+			}
 			if (mCharacter[currentBox] != null)
 			{
 				Destroy(mCharacter[currentBox]);
@@ -192,6 +287,8 @@ public class ChracterListManager : MonoBehaviour
 			mCharacter[currentBox] = Instantiate(baseCh, vec, Quaternion.identity) as GameObject;
 			mCharacter[currentBox].transform.localScale = new Vector2(75, 75);
 			mCharacter[currentBox].GetComponent<SpriteRenderer>().sortingOrder = orderLayer[currentBox];
+
+			mCharacterInstance[currentBox] = characterInfoMap[button];
 
 
 			var head = mCharacter[currentBox].transform.Find("head");
@@ -212,9 +309,33 @@ public class ChracterListManager : MonoBehaviour
 		}
 	}
 
+	public void UpdateCharacterParty()
+	{
+		var dataRequest = new UpdateUserDataRequest()
+		{
+			Data = new Dictionary<string, string>() {
+				{"Party1", mCharacterInstance[0] != null ? mCharacterInstance[0].ItemInstanceId : ""},
+				{"Party2", mCharacterInstance[1] != null ? mCharacterInstance[1].ItemInstanceId : ""},
+				{"Party3", mCharacterInstance[2] != null ? mCharacterInstance[2].ItemInstanceId : ""},
+				{"Party4", mCharacterInstance[3] != null ? mCharacterInstance[3].ItemInstanceId : ""}
+			},
+		};
+
+		PlayFabClientAPI.UpdateUserData(dataRequest, (result) =>
+		{
+			Debug.Log("complete");
+		}, (error) =>
+		{
+			Debug.Log(error.GenerateErrorReport());
+		});
+	}
+
+
+
 
 	public void ChangePosition()
 	{
+		UpdateCharacterParty();
 		foreach (var chars in mCharacter)
 		{
 			if (chars != null)
@@ -225,4 +346,6 @@ public class ChracterListManager : MonoBehaviour
 			}
 		}
 	}
+
+
 }
