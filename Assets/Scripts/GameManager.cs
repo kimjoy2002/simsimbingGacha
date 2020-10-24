@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+	public EffectManager effectManager;
+
 	private List<GameObject> mCharacter = new List<GameObject>(8);
 	private List<ItemInstance> mCharacterInstance = new List<ItemInstance>(8);
 	private List<int> orderLayer = new List<int>(8);
@@ -169,90 +171,42 @@ public class GameManager : MonoBehaviour
 	}
 
 
-
 	public void StartBattle(Button button)
+	{
+		if (button != null)
+			button.gameObject.SetActive(false);
+		StartBattle();
+
+	}
+
+	public void StartBattle()
 	{
 		if ((mCharacter[0] == null && mCharacter[1] == null && mCharacter[2] == null && mCharacter[3] == null) ||
 			(mCharacter[4] == null && mCharacter[5] == null && mCharacter[6] == null && mCharacter[7] == null))
 		{
 			return;
 		}
-		if (button != null)
-			button.gameObject.SetActive(false);
 
 
 		int attacker = Random.Range(0, 4);
 		int defender = Random.Range(4, 8);
+		CharacterObject attackObj = new CharacterObject();
+		CharacterObject dependObj = new CharacterObject();
 		if (Random.Range(0, 2) == 0)
 		{
 			int temp = attacker;
 			attacker = defender;
 			defender = temp;
+			attackObj.SetObject(mCharacter[attacker], true);
+			dependObj.SetObject(mCharacter[defender], false);
+		}
+		else
+		{
+			attackObj.SetObject(mCharacter[attacker], false);
+			dependObj.SetObject(mCharacter[defender], true);
 		}
 
-		StartCoroutine(AttackToObject(attacker, defender));
-
+		StartCoroutine(effectManager.AttackToObject(attackObj, dependObj, StartBattle));
 	}
 
-	IEnumerator AttackToObject(int attackerNum, int defenderNum)
-	{
-		var attacker = mCharacter[attackerNum];
-		var defender = mCharacter[defenderNum];
-		if (attacker == null || defender == null)
-		{
-			yield break;
-		}
-
-		var animator = attacker.GetComponent<Animator>();
-		animator.SetBool("isAttack", true);
-
-
-		Vector2 start = attacker.transform.position;
-		Vector2 end = defender.transform.position;
-		float t = 0f;
-
-
-		while (true)
-		{
-			t += Time.deltaTime*1.5f;
-
-			Vector2 current = Vector2.Lerp(start, end, t);
-
-			attacker.transform.position = current;
-			if (Vector2.Distance(current, end) < 50)
-			{
-				break;
-			}
-			yield return 0;
-		}
-		defender.GetComponent<Animator>().SetBool("isAttacked", true);
-
-		for (int i = 0; i < 30; i++)
-		{
-			yield return 0;
-		}
-
-		animator.SetBool("isAttack", false);
-		defender.GetComponent<Animator>().SetBool("isAttacked", false);
-
-		Vector2 sstart = attacker.transform.position;
-		t = 0f;
-		while (true)
-		{
-			t += Time.deltaTime * 1.5f;
-
-			Vector2 current = Vector2.Lerp(sstart, start, t);
-
-			attacker.transform.position = current;
-			if (Vector2.Distance(current, start) < 1)
-			{
-				break;
-			}
-			yield return 0;
-		}
-
-
-		attacker.transform.position = start;
-		StartBattle(null);
-	}
 }
