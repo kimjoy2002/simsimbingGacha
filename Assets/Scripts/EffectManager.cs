@@ -105,40 +105,18 @@ public class EffectManager : MonoBehaviour
 		if (anim != null)
 		{
 			
-			UnityEditor.Animations.AnimatorController ac = anim.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
-			if(ac == null)
+			RuntimeAnimatorController ac = anim.runtimeAnimatorController;
+
+			AnimationClip[] clips = ac.animationClips;
+
+			foreach (AnimationClip clip in clips)
 			{
-
-				AnimatorOverrideController ac_over = anim.runtimeAnimatorController as AnimatorOverrideController;
-				AnimationClip[] clips = ac_over.animationClips;
-				foreach(AnimationClip clip in clips)
+				if (clip.name.EndsWith(clipName))
 				{
-					Debug.Log("Animation clip name:" + clip.name);
-					if (clip.name.EndsWith(clipName))
-					{
-						length = clip.length;
-					}
-
+					length = clip.length;
 				}
-				Debug.Log("Animation over:" + clipName + ":" + length);
-				return length;
-			}
 
-			UnityEditor.Animations.AnimatorStateMachine sm = ac.layers[0].stateMachine;
-
-			for (int i = 0; i < sm.states.Length; i++)
-			{
-				UnityEditor.Animations.AnimatorState state = sm.states[i].state;
-				if (state.name == clipName)
-				{
-					AnimationClip clip = state.motion as AnimationClip;
-					if (clip != null)
-					{
-						length = clip.length;
-					}
-				}
 			}
-			Debug.Log("Animation:" + clipName + ":" + length);
 		}
 		return length;
 	}
