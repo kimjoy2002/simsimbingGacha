@@ -14,6 +14,19 @@ public class EffectManager : MonoBehaviour
 		cameraOrigin = mainCamera.transform.position;
 	}
 
+	void PlayParticle(Vector2 position, string effName, float startDelay)
+	{
+		var paticle = Resources.Load<GameObject>("Prefabs/Effect/" + effName);
+		var patiObj = Instantiate(paticle, position, Quaternion.identity) as GameObject;
+
+		foreach (Transform child in patiObj.transform)
+		{
+			ParticleSystem parti = child.GetComponent<ParticleSystem>();
+			parti.startDelay = startDelay;
+		}
+	}
+
+
 	IEnumerator JumpToObject(CharacterObject attackerObj, CharacterObject defenderObj, float moveTime, float parabolaHeight)
 	{
 		GameObject attacker = attackerObj.mGameObject;
@@ -86,9 +99,52 @@ public class EffectManager : MonoBehaviour
 		mainCamera.orthographicSize = size;
 	}
 
+	float getAnimationClipLength(Animator anim, string clipName)
+	{
+		float length = 10;
+		if (anim != null)
+		{
+			
+			UnityEditor.Animations.AnimatorController ac = anim.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
+			if(ac == null)
+			{
+
+				AnimatorOverrideController ac_over = anim.runtimeAnimatorController as AnimatorOverrideController;
+				AnimationClip[] clips = ac_over.animationClips;
+				foreach(AnimationClip clip in clips)
+				{
+					Debug.Log("Animation clip name:" + clip.name);
+					if (clip.name.EndsWith(clipName))
+					{
+						length = clip.length;
+					}
+
+				}
+				Debug.Log("Animation over:" + clipName + ":" + length);
+				return length;
+			}
+
+			UnityEditor.Animations.AnimatorStateMachine sm = ac.layers[0].stateMachine;
+
+			for (int i = 0; i < sm.states.Length; i++)
+			{
+				UnityEditor.Animations.AnimatorState state = sm.states[i].state;
+				if (state.name == clipName)
+				{
+					AnimationClip clip = state.motion as AnimationClip;
+					if (clip != null)
+					{
+						length = clip.length;
+					}
+				}
+			}
+			Debug.Log("Animation:" + clipName + ":" + length);
+		}
+		return length;
+	}
+
 	public IEnumerator AttackToObject(CharacterObject attackerObj, CharacterObject defenderObj, Action func)
 	{
-		IEnumerator iter;
 		GameObject attacker = attackerObj.mGameObject;
 		GameObject defender = defenderObj.mGameObject;
 		if (attacker == null || defender == null)
@@ -104,8 +160,13 @@ public class EffectManager : MonoBehaviour
 		animator.SetBool("isAttack", true);
 		defender.GetComponent<Animator>().SetBool("isAttacked", true);
 
-	    CameraShake(0.1f, 20.0f,1.0f);
-		yield return new WaitForSeconds(3.0f);
+		float attack_time = getAnimationClipLength(animator, "attack");
+
+		PlayParticle(defenderObj.mGameObject.transform.position, "FX_HIT_01", 0.83f);
+		CameraShake(0.1f, 20.0f, 0.83f);
+		PlayParticle(defenderObj.mGameObject.transform.position, "FX_HIT_01", 1.0f);
+		CameraShake(0.1f, 20.0f, 1.0f);
+		yield return new WaitForSeconds(attack_time);
 
 		animator.SetBool("isAttack", false);
 		defender.GetComponent<Animator>().SetBool("isAttacked", false);

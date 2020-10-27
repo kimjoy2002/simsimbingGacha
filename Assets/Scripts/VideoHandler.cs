@@ -128,7 +128,7 @@ public class VideoHandler : MonoBehaviour
 					tempGachaPick.gameObject.SetActive(true);
 					tempGachaPick.GetComponent<ScaleChangeEffect>().StartAnimation();
 
-					var paticle = Resources.Load<GameObject>("Prefabs/GachaPaticle");
+					var paticle = Resources.Load<GameObject>("Prefabs/Effect/GachaPaticle");
 					var patiObj = Instantiate(paticle, new Vector2(), Quaternion.identity) as GameObject;
 				}
 			}
