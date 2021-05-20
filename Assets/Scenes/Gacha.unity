@@ -298,7 +298,8 @@ MonoBehaviour:
   - {fileID: 9100000, guid: 8bc1c84ea1ab7d04795c3d3cc3988dea, type: 2}
   - {fileID: 9100000, guid: fb348161c59b6e040abe72446cfa1564, type: 2}
   - {fileID: 9100000, guid: 06c7745eeda64194a82028d21e187ca6, type: 2}
-  mTouchSlice: 000000000300000002000000
+  - {fileID: 9100000, guid: d36a162f2c76c484aa7343c6c278de9b, type: 2}
+  mTouchSlice: 00000000030000000200000001000000
   mAnimator: {fileID: 194323466}
   gachaButtion: {fileID: 1815715318}
   tempGachaPick: {fileID: 892048810}
@@ -306,6 +307,7 @@ MonoBehaviour:
   requestGacha: -1
   remainGacha: 1
   resultWindow: 0
+  start: 0
   end: 0
 --- !u!4 &360794053
 Transform:
